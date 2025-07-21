@@ -24,6 +24,8 @@ export type Expense = {
   note?: string;
   date: string;
   merchant?: string;
+  isRecurring?: boolean;
+  frequency?: 'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly';
 };
 
 export type BudgetSummary = {

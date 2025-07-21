@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import HomeScreen from './screens/HomeScreen';
 import AddPaycheckScreen from './screens/AddPaycheckScreen';
 // import AddBudgetScreen from './screens/AddBudgetScreen';
-// import LogExpenseScreen from './screens/LogExpenseScreen';
+import LogExpenseScreen from './screens/LogExpenseScreen';
 // import BudgetOverviewScreen from './screens/BudgetOverviewScreen';
 import { RootStackParamList } from './constants/types';
 
@@ -36,7 +36,8 @@ export default function App() {
           />
           <Stack.Screen name="Add Paycheck" component={AddPaycheckScreen} />
           {/* <Stack.Screen name="Add Budget" component={AddBudgetScreen} />
-          <Stack.Screen name="Log Expense" component={LogExpenseScreen} /> */}
+           */}
+          <Stack.Screen name="Log Expense" component={LogExpenseScreen} />
           {/* <Stack.Screen 
             name="Budgets" 
             component={BudgetOverviewScreen}

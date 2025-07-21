@@ -1,4 +1,3 @@
-// screens/AddPaycheckScreen.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -11,19 +10,20 @@ import {
     Switch,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, Paycheck } from '../constants/types';
+import { RootStackParamList, Paycheck, Expense } from '../constants/types';
 import { storageUtils } from '../utils/storage';
-import { styles } from '../styles/AddPaycheck.styles'
+import { styles } from '../styles/LogExpense.styles'
 
-type AddPaycheckNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Add Paycheck'>;
+type LogExpenseNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Log Expense'>;
 
 interface Props {
-    navigation: AddPaycheckNavigationProp;
+    navigation: LogExpenseNavigationProp;
 }
 
-export default function AddPaycheckScreen({ navigation }: Props) {
+export default function LogExpenseScreen({ navigation }: Props) {
     const [label, setLabel] = useState('');
     const [amount, setAmount] = useState('');
+    const [merchant, setMerchant] = useState('')
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [isRecurring, setIsRecurring] = useState(false);
     const [frequency, setFrequency] = useState<'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly'>('bi-weekly');
@@ -45,26 +45,25 @@ export default function AddPaycheckScreen({ navigation }: Props) {
         setLoading(true);
 
         try {
-            // Load existing paychecks
-            const existingPaychecks = await storageUtils.getPaychecks();
+            const existingExpenses = await storageUtils.getExpenses();
 
-            // Create new paycheck
-            const newPaycheck: Paycheck = {
+            const newExpense: Expense = {
                 id: Date.now().toString(),
-                label: label.trim(),
+                categoryId: label.trim(),
                 amount: parsedAmount,
+                merchant,
                 date,
                 isRecurring,
                 frequency: isRecurring ? frequency : undefined,
             };
 
-            // Save updated paychecks
-            await storageUtils.savePaychecks([...existingPaychecks, newPaycheck]);
+            // Save updated expenses
+            await storageUtils.saveExpenses([...existingExpenses, newExpense]);
 
-            Alert.alert('Success', 'Paycheck added successfully!');
+            Alert.alert('Success', 'Expense added successfully!');
             navigation.goBack();
         } catch (error) {
-            Alert.alert('Error', 'Failed to save paycheck. Please try again.');
+            Alert.alert('Error', 'Failed to save expense. Please try again.');
             console.error(error);
         } finally {
             setLoading(false);
@@ -101,16 +100,16 @@ export default function AddPaycheckScreen({ navigation }: Props) {
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
             <View style={styles.form}>
-                <Text style={styles.title}>Add New Paycheck</Text>
+                <Text style={styles.title}>Add New Expense</Text>
 
-                {/* Paycheck Label */}
+                {/* Expense Label */}
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Paycheck Label *</Text>
+                    <Text style={styles.label}>Expense Label *</Text>
                     <TextInput
                         style={styles.input}
                         value={label}
                         onChangeText={setLabel}
-                        placeholder="e.g., Main Job, Side Hustle"
+                        placeholder="e.g., Car Payment, Mortgage"
                         placeholderTextColor="#9ca3af"
                         autoCapitalize="words"
                     />
@@ -127,6 +126,19 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                         placeholderTextColor="#9ca3af"
                         keyboardType="decimal-pad"
                         autoCapitalize="none"
+                    />
+                </View>
+
+                {/* Merhcant */}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Merchant</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={merchant}
+                        onChangeText={setMerchant}
+                        placeholder="e.g., VISA, McDonalds, AEP"
+                        placeholderTextColor="#9ca3af"
+                        autoCapitalize="words"
                     />
                 </View>
 
@@ -147,9 +159,9 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                 {/* Recurring Toggle */}
                 <View style={styles.switchGroup}>
                     <View style={styles.switchLabelContainer}>
-                        <Text style={styles.label}>Recurring Paycheck</Text>
+                        <Text style={styles.label}>Recurring Expense?</Text>
                         <Text style={styles.helpText}>
-                            Enable if this paycheck repeats regularly
+                            Enable if this expense repeats regularly
                         </Text>
                     </View>
                     <Switch
@@ -209,7 +221,7 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                         disabled={loading}
                     >
                         <Text style={styles.saveButtonText}>
-                            {loading ? 'Saving...' : 'Save Paycheck'}
+                            {loading ? 'Saving...' : 'Save Expense'}
                         </Text>
                     </TouchableOpacity>
                 </View>
