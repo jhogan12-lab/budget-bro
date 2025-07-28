@@ -342,23 +342,40 @@ export const styles = StyleSheet.create({
         marginBottom: 12,
     },
     emptyExpensesSubtext: {
-        fontSize: 15, 
+        fontSize: 15,
         color: '#9ca3af',
         textAlign: 'center',
     },
     emptyIncomeState: {
         alignItems: 'center',
-        paddingVertical: 40, 
+        paddingVertical: 40,
     },
     emptyIncomeText: {
-        fontSize: 17, 
+        fontSize: 17,
         fontWeight: '600',
         color: '#6b7280',
-        marginBottom: 12, 
+        marginBottom: 12,
     },
     emptyIncomeSubtext: {
-        fontSize: 15, 
+        fontSize: 15,
         color: '#9ca3af',
         textAlign: 'center',
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    viewButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 6,
+    },
+    viewButtonText: {
+        fontSize: 14,
+        color: '#4f46e5',
+        fontWeight: '500',
     },
 });

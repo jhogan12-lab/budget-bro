@@ -60,4 +60,6 @@ export type RootStackParamList = {
   'Add Budget': undefined;
   'Log Expense': undefined;
   Budgets: undefined;
+  Income: undefined;
+  ManageExpenses: undefined;
 };

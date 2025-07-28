@@ -115,4 +115,41 @@ export const styles = StyleSheet.create({
         fontWeight: '600',
         color: 'white',
     },
+        categorySelector: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+    },
+    selectedCategoryContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    categoryDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginRight: 8,
+    },
+    selectedCategoryText: {
+        fontSize: 16,
+        color: '#1f2937',
+    },
+    placeholderText: {
+        fontSize: 16,
+        color: '#9ca3af',
+    },
+    dropdownArrow: {
+        fontSize: 12,
+        color: '#6b7280',
+    },
+    textArea: {
+        height: 80,
+        textAlignVertical: 'top',
+    },
+    categoryIcon: {
+        fontSize: 14,
+        marginRight: 6,
+    },
 });

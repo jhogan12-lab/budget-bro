@@ -1,4 +1,3 @@
-// screens/HomeScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -229,7 +228,15 @@ export default function HomeScreen({ navigation }: Props) {
 
       {/* Income Section */}
       <View style={styles.incomeCard}>
-        <Text style={styles.cardTitle}>Income</Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Income</Text>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => navigation.navigate('Income')}
+          >
+            <Text style={styles.viewButtonText}>Manage Income</Text>
+          </TouchableOpacity>
+        </View>
 
         {paychecks.length > 0 ? (
           <>
@@ -286,8 +293,16 @@ export default function HomeScreen({ navigation }: Props) {
       </View>
 
       {/* Expenses Section */}
-      <View style={styles.expensesCard}>
-        <Text style={styles.cardTitle}>Expenses</Text>
+            <View style={styles.incomeCard}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Expenses</Text>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => navigation.navigate('ManageExpenses')}
+          >
+            <Text style={styles.viewButtonText}>Manage Expenses</Text>
+          </TouchableOpacity>
+        </View>
 
         {expenses.length > 0 ? (
           <>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,11 +8,13 @@ import {
     Alert,
     ScrollView,
     Switch,
+    Modal,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, Paycheck, Expense } from '../constants/types';
+import { RootStackParamList, Paycheck, Expense, BudgetCategory } from '../constants/types';
 import { storageUtils } from '../utils/storage';
 import { styles } from '../styles/LogExpense.styles'
+import { modalStyles } from '../styles/Modal.styles';
 
 type LogExpenseNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Log Expense'>;
 
@@ -20,19 +22,65 @@ interface Props {
     navigation: LogExpenseNavigationProp;
 }
 
+// Hardcoded categories with colors
+const DEFAULT_CATEGORIES: BudgetCategory[] = [
+    { id: 'food', name: 'Food & Dining', color: '#ef4444', limit: 500, spent: 0, icon: '🍽️' },
+    { id: 'transportation', name: 'Transportation', color: '#3b82f6', limit: 300, spent: 0, icon: '🚗' },
+    { id: 'shopping', name: 'Shopping', color: '#f59e0b', limit: 200, spent: 0, icon: '🛍️' },
+    { id: 'entertainment', name: 'Entertainment', color: '#8b5cf6', limit: 150, spent: 0, icon: '🎬' },
+    { id: 'bills', name: 'Bills & Utilities', color: '#10b981', limit: 400, spent: 0, icon: '💡' },
+    { id: 'healthcare', name: 'Healthcare', color: '#06b6d4', limit: 200, spent: 0, icon: '🏥' },
+    { id: 'education', name: 'Education', color: '#f97316', limit: 100, spent: 0, icon: '📚' },
+    { id: 'travel', name: 'Travel', color: '#84cc16', limit: 300, spent: 0, icon: '✈️' },
+    { id: 'personal', name: 'Personal Care', color: '#ec4899', limit: 100, spent: 0, icon: '💄' },
+    { id: 'other', name: 'Other', color: '#6b7280', limit: 100, spent: 0, icon: '📦' },
+];
+
 export default function LogExpenseScreen({ navigation }: Props) {
     const [label, setLabel] = useState('');
     const [amount, setAmount] = useState('');
-    const [merchant, setMerchant] = useState('')
+    const [merchant, setMerchant] = useState('');
+    const [note, setNote] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [isRecurring, setIsRecurring] = useState(false);
     const [frequency, setFrequency] = useState<'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly'>('bi-weekly');
     const [loading, setLoading] = useState(false);
+    
+    // Category selection state
+    const [categories, setCategories] = useState<BudgetCategory[]>(DEFAULT_CATEGORIES);
+    const [selectedCategory, setSelectedCategory] = useState<BudgetCategory | null>(null);
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            const existingCategories = await storageUtils.getBudgets();
+            if (existingCategories.length > 0) {
+                setCategories(existingCategories);
+            } else {
+                // Save default categories if none exist
+                await storageUtils.saveBudgets(DEFAULT_CATEGORIES);
+                setCategories(DEFAULT_CATEGORIES);
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+            // Fallback to default categories
+            setCategories(DEFAULT_CATEGORIES);
+        }
+    };
 
     const handleSave = async () => {
         // Validation
+        if (!selectedCategory) {
+            Alert.alert('Error', 'Please select a category');
+            return;
+        }
+
         if (!label.trim()) {
-            Alert.alert('Error', 'Please enter a paycheck label');
+            Alert.alert('Error', 'Please enter an expense description');
             return;
         }
 
@@ -49,9 +97,10 @@ export default function LogExpenseScreen({ navigation }: Props) {
 
             const newExpense: Expense = {
                 id: Date.now().toString(),
-                categoryId: label.trim(),
+                categoryId: selectedCategory.id,
                 amount: parsedAmount,
-                merchant,
+                merchant: merchant.trim(),
+                note: note.trim(),
                 date,
                 isRecurring,
                 frequency: isRecurring ? frequency : undefined,
@@ -102,14 +151,38 @@ export default function LogExpenseScreen({ navigation }: Props) {
             <View style={styles.form}>
                 <Text style={styles.title}>Add New Expense</Text>
 
-                {/* Expense Label */}
+                {/* Category Selection */}
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Expense Label *</Text>
+                    <Text style={styles.label}>Category *</Text>
+                    <TouchableOpacity
+                        style={[styles.input, styles.categorySelector]}
+                        onPress={() => setShowCategoryModal(true)}
+                    >
+                        {selectedCategory ? (
+                            <View style={styles.selectedCategoryContainer}>
+                                {selectedCategory.icon && (
+                                    <Text style={styles.categoryIcon}>{selectedCategory.icon}</Text>
+                                )}
+                                <View 
+                                    style={[styles.categoryDot, { backgroundColor: selectedCategory.color }]} 
+                                />
+                                <Text style={styles.selectedCategoryText}>{selectedCategory.name}</Text>
+                            </View>
+                        ) : (
+                            <Text style={styles.placeholderText}>Select a category</Text>
+                        )}
+                        <Text style={styles.dropdownArrow}>▼</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Expense Description */}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Description *</Text>
                     <TextInput
                         style={styles.input}
                         value={label}
                         onChangeText={setLabel}
-                        placeholder="e.g., Car Payment, Mortgage"
+                        placeholder="e.g., Lunch at McDonald's, Gas station"
                         placeholderTextColor="#9ca3af"
                         autoCapitalize="words"
                     />
@@ -129,16 +202,31 @@ export default function LogExpenseScreen({ navigation }: Props) {
                     />
                 </View>
 
-                {/* Merhcant */}
+                {/* Merchant */}
                 <View style={styles.inputGroup}>
                     <Text style={styles.label}>Merchant</Text>
                     <TextInput
                         style={styles.input}
                         value={merchant}
                         onChangeText={setMerchant}
-                        placeholder="e.g., VISA, McDonalds, AEP"
+                        placeholder="e.g., McDonald's, Shell, Amazon"
                         placeholderTextColor="#9ca3af"
                         autoCapitalize="words"
+                    />
+                </View>
+
+                {/* Note */}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Note</Text>
+                    <TextInput
+                        style={[styles.input, styles.textArea]}
+                        value={note}
+                        onChangeText={setNote}
+                        placeholder="Optional note about this expense"
+                        placeholderTextColor="#9ca3af"
+                        multiline
+                        numberOfLines={3}
+                        autoCapitalize="sentences"
                     />
                 </View>
 
@@ -226,6 +314,62 @@ export default function LogExpenseScreen({ navigation }: Props) {
                     </TouchableOpacity>
                 </View>
             </View>
+
+            {/* Category Selection Modal */}
+            <Modal
+                visible={showCategoryModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowCategoryModal(false)}
+            >
+                <View style={modalStyles.overlay}>
+                    <View style={modalStyles.container}>
+                        <View style={modalStyles.header}>
+                            <Text style={modalStyles.title}>Select Category</Text>
+                            <TouchableOpacity
+                                onPress={() => setShowCategoryModal(false)}
+                                style={modalStyles.closeButton}
+                            >
+                                <Text style={modalStyles.closeButtonText}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <ScrollView style={modalStyles.categoryList}>
+                            {categories.map((category) => (
+                                <TouchableOpacity
+                                    key={category.id}
+                                    style={[
+                                        modalStyles.categoryItem,
+                                        selectedCategory?.id === category.id && modalStyles.selectedCategoryItem
+                                    ]}
+                                    onPress={() => {
+                                        setSelectedCategory(category);
+                                        setShowCategoryModal(false);
+                                    }}
+                                >
+                                    <View style={modalStyles.categoryInfo}>
+                                        {category.icon && (
+                                            <Text style={modalStyles.categoryIcon}>{category.icon}</Text>
+                                        )}
+                                        <View 
+                                            style={[modalStyles.categoryDot, { backgroundColor: category.color }]} 
+                                        />
+                                        <View style={modalStyles.categoryTextContainer}>
+                                            <Text style={modalStyles.categoryName}>{category.name}</Text>
+                                            <Text style={modalStyles.categoryBudget}>
+                                                ${category.spent.toFixed(0)} / ${category.limit.toFixed(0)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    {selectedCategory?.id === category.id && (
+                                        <Text style={modalStyles.checkmark}>✓</Text>
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 }
