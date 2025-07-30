@@ -11,17 +11,18 @@ import {
     Switch,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, Paycheck } from '../constants/types';
+import { RootStackParamList, Income } from '../constants/types';
 import { storageUtils } from '../utils/storage';
-import { styles } from '../styles/AddPaycheck.styles'
+import { styles } from '../styles/AddIncome.styles'
+import { globalStyles } from '../styles/Global.styles';
 
-type AddPaycheckNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Add Paycheck'>;
+type AddIncomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Add Income'>;
 
 interface Props {
-    navigation: AddPaycheckNavigationProp;
+    navigation: AddIncomeNavigationProp;
 }
 
-export default function AddPaycheckScreen({ navigation }: Props) {
+export default function AddincomeScreen({ navigation }: Props) {
     const [label, setLabel] = useState('');
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -32,7 +33,7 @@ export default function AddPaycheckScreen({ navigation }: Props) {
     const handleSave = async () => {
         // Validation
         if (!label.trim()) {
-            Alert.alert('Error', 'Please enter a paycheck label');
+            Alert.alert('Error', 'Please enter an income label');
             return;
         }
 
@@ -45,11 +46,11 @@ export default function AddPaycheckScreen({ navigation }: Props) {
         setLoading(true);
 
         try {
-            // Load existing paychecks
-            const existingPaychecks = await storageUtils.getPaychecks();
+            // Load existing income
+            const existingIncome = await storageUtils.getIncome();
 
-            // Create new paycheck
-            const newPaycheck: Paycheck = {
+            // Create new income
+            const newIncome: Income = {
                 id: Date.now().toString(),
                 label: label.trim(),
                 amount: parsedAmount,
@@ -58,13 +59,13 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                 frequency: isRecurring ? frequency : undefined,
             };
 
-            // Save updated paychecks
-            await storageUtils.savePaychecks([...existingPaychecks, newPaycheck]);
+            // Save updated income
+            await storageUtils.saveIncome([...existingIncome, newIncome]);
 
-            Alert.alert('Success', 'Paycheck added successfully!');
+            Alert.alert('Success', 'Income added successfully!');
             navigation.goBack();
         } catch (error) {
-            Alert.alert('Error', 'Failed to save paycheck. Please try again.');
+            Alert.alert('Error', 'Failed to save income. Please try again.');
             console.error(error);
         } finally {
             setLoading(false);
@@ -99,15 +100,15 @@ export default function AddPaycheckScreen({ navigation }: Props) {
     );
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-            <View style={styles.form}>
-                <Text style={styles.title}>Add New Paycheck</Text>
+        <ScrollView style={globalStyles.container} contentContainerStyle={globalStyles.contentContainer}>
+            <View style={globalStyles.formCard}>
+                <Text style={globalStyles.title}>Add New Income</Text>
 
-                {/* Paycheck Label */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Paycheck Label *</Text>
+                {/* Income Label */}
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Income Label *</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={label}
                         onChangeText={setLabel}
                         placeholder="e.g., Main Job, Side Hustle"
@@ -117,10 +118,10 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                 </View>
 
                 {/* Amount */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Amount *</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Amount *</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={amount}
                         onChangeText={setAmount}
                         placeholder="0.00"
@@ -131,25 +132,25 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                 </View>
 
                 {/* Date */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Date</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Date</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={date}
                         onChangeText={setDate}
                         placeholder="YYYY-MM-DD"
                         placeholderTextColor="#9ca3af"
                         autoCapitalize="none"
                     />
-                    <Text style={styles.helpText}>Format: YYYY-MM-DD (e.g., 2024-01-15)</Text>
+                    <Text style={globalStyles.helpText}>Format: YYYY-MM-DD (e.g., 2024-01-15)</Text>
                 </View>
 
                 {/* Recurring Toggle */}
                 <View style={styles.switchGroup}>
                     <View style={styles.switchLabelContainer}>
-                        <Text style={styles.label}>Recurring Paycheck</Text>
-                        <Text style={styles.helpText}>
-                            Enable if this paycheck repeats regularly
+                        <Text style={globalStyles.label}>Recurring Income</Text>
+                        <Text style={globalStyles.helpText}>
+                            Enable if this income repeats regularly
                         </Text>
                     </View>
                     <Switch
@@ -162,8 +163,8 @@ export default function AddPaycheckScreen({ navigation }: Props) {
 
                 {/* Frequency Selection (only if recurring) */}
                 {isRecurring && (
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Frequency</Text>
+                    <View style={globalStyles.inputGroup}>
+                        <Text style={globalStyles.label}>Frequency</Text>
                         <View style={styles.frequencyContainer}>
                             <FrequencyButton
                                 freq="weekly"
@@ -194,22 +195,22 @@ export default function AddPaycheckScreen({ navigation }: Props) {
                 )}
 
                 {/* Action Buttons */}
-                <View style={styles.buttonContainer}>
+                <View style={globalStyles.buttonContainer}>
                     <TouchableOpacity
-                        style={[styles.button, styles.cancelButton]}
+                        style={[styles.button, globalStyles.buttonSecondary]}
                         onPress={() => navigation.goBack()}
                         disabled={loading}
                     >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                        <Text style={globalStyles.buttonTextSecondary}>Cancel</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.button, styles.saveButton]}
+                        style={[styles.button, globalStyles.buttonSuccess]}
                         onPress={handleSave}
                         disabled={loading}
                     >
-                        <Text style={styles.saveButtonText}>
-                            {loading ? 'Saving...' : 'Save Paycheck'}
+                        <Text style={globalStyles.buttonText}>
+                            {loading ? 'Saving...' : 'Save Income'}
                         </Text>
                     </TouchableOpacity>
                 </View>

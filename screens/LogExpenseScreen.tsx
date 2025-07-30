@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    Alert,
-    ScrollView,
-    Switch,
-    Modal,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView, Switch, Modal, } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, Paycheck, Expense, BudgetCategory } from '../constants/types';
+import { RootStackParamList, Expense, BudgetCategory } from '../constants/types';
 import { storageUtils } from '../utils/storage';
 import { styles } from '../styles/LogExpense.styles'
 import { modalStyles } from '../styles/Modal.styles';
+import { globalStyles } from '../styles/Global.styles';
 
 type LogExpenseNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Log Expense'>;
 
@@ -100,6 +91,7 @@ export default function LogExpenseScreen({ navigation }: Props) {
                 categoryId: selectedCategory.id,
                 amount: parsedAmount,
                 merchant: merchant.trim(),
+                description: label,
                 note: note.trim(),
                 date,
                 isRecurring,
@@ -147,15 +139,15 @@ export default function LogExpenseScreen({ navigation }: Props) {
     );
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-            <View style={styles.form}>
-                <Text style={styles.title}>Add New Expense</Text>
+        <ScrollView style={globalStyles.container} contentContainerStyle={globalStyles.contentContainer}>
+            <View style={globalStyles.formCard}>
+                <Text style={globalStyles.title}>Add New Expense</Text>
 
                 {/* Category Selection */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Category *</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Category *</Text>
                     <TouchableOpacity
-                        style={[styles.input, styles.categorySelector]}
+                        style={[globalStyles.input, styles.categorySelector]}
                         onPress={() => setShowCategoryModal(true)}
                     >
                         {selectedCategory ? (
@@ -164,22 +156,22 @@ export default function LogExpenseScreen({ navigation }: Props) {
                                     <Text style={styles.categoryIcon}>{selectedCategory.icon}</Text>
                                 )}
                                 <View 
-                                    style={[styles.categoryDot, { backgroundColor: selectedCategory.color }]} 
+                                    style={[globalStyles.categoryDot, { backgroundColor: selectedCategory.color }]} 
                                 />
                                 <Text style={styles.selectedCategoryText}>{selectedCategory.name}</Text>
                             </View>
                         ) : (
-                            <Text style={styles.placeholderText}>Select a category</Text>
+                            <Text style={globalStyles.placeholderText}>Select a category</Text>
                         )}
                         <Text style={styles.dropdownArrow}>▼</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Expense Description */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Description *</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Description *</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={label}
                         onChangeText={setLabel}
                         placeholder="e.g., Lunch at McDonald's, Gas station"
@@ -189,10 +181,10 @@ export default function LogExpenseScreen({ navigation }: Props) {
                 </View>
 
                 {/* Amount */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Amount *</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Amount *</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={amount}
                         onChangeText={setAmount}
                         placeholder="0.00"
@@ -203,10 +195,10 @@ export default function LogExpenseScreen({ navigation }: Props) {
                 </View>
 
                 {/* Merchant */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Merchant</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Merchant</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={merchant}
                         onChangeText={setMerchant}
                         placeholder="e.g., McDonald's, Shell, Amazon"
@@ -216,10 +208,10 @@ export default function LogExpenseScreen({ navigation }: Props) {
                 </View>
 
                 {/* Note */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Note</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Note</Text>
                     <TextInput
-                        style={[styles.input, styles.textArea]}
+                        style={[globalStyles.input, globalStyles.textArea]}
                         value={note}
                         onChangeText={setNote}
                         placeholder="Optional note about this expense"
@@ -231,24 +223,24 @@ export default function LogExpenseScreen({ navigation }: Props) {
                 </View>
 
                 {/* Date */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Date</Text>
+                <View style={globalStyles.inputGroup}>
+                    <Text style={globalStyles.label}>Date</Text>
                     <TextInput
-                        style={styles.input}
+                        style={globalStyles.input}
                         value={date}
                         onChangeText={setDate}
                         placeholder="YYYY-MM-DD"
                         placeholderTextColor="#9ca3af"
                         autoCapitalize="none"
                     />
-                    <Text style={styles.helpText}>Format: YYYY-MM-DD (e.g., 2024-01-15)</Text>
+                    <Text style={globalStyles.helpText}>Format: YYYY-MM-DD (e.g., 2024-01-15)</Text>
                 </View>
 
                 {/* Recurring Toggle */}
                 <View style={styles.switchGroup}>
                     <View style={styles.switchLabelContainer}>
-                        <Text style={styles.label}>Recurring Expense?</Text>
-                        <Text style={styles.helpText}>
+                        <Text style={globalStyles.label}>Recurring Expense?</Text>
+                        <Text style={globalStyles.helpText}>
                             Enable if this expense repeats regularly
                         </Text>
                     </View>
@@ -262,8 +254,8 @@ export default function LogExpenseScreen({ navigation }: Props) {
 
                 {/* Frequency Selection (only if recurring) */}
                 {isRecurring && (
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Frequency</Text>
+                    <View style={globalStyles.inputGroup}>
+                        <Text style={globalStyles.label}>Frequency</Text>
                         <View style={styles.frequencyContainer}>
                             <FrequencyButton
                                 freq="weekly"
@@ -294,21 +286,21 @@ export default function LogExpenseScreen({ navigation }: Props) {
                 )}
 
                 {/* Action Buttons */}
-                <View style={styles.buttonContainer}>
+                <View style={globalStyles.buttonContainer}>
                     <TouchableOpacity
-                        style={[styles.button, styles.cancelButton]}
+                        style={[styles.button, globalStyles.buttonSecondary]}
                         onPress={() => navigation.goBack()}
                         disabled={loading}
                     >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                        <Text style={globalStyles.buttonTextSecondary}>Cancel</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.button, styles.saveButton]}
+                        style={[styles.button, globalStyles.buttonSuccess]}
                         onPress={handleSave}
                         disabled={loading}
                     >
-                        <Text style={styles.saveButtonText}>
+                        <Text style={globalStyles.buttonText}>
                             {loading ? 'Saving...' : 'Save Expense'}
                         </Text>
                     </TouchableOpacity>

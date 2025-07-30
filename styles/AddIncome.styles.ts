@@ -44,27 +44,4 @@ export const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
     },
-    categorySelector: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-    },
-    selectedCategoryContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    selectedCategoryText: {
-        fontSize: 16,
-        color: '#1f2937',
-    },
-    dropdownArrow: {
-        fontSize: 12,
-        color: '#6b7280',
-    },
-    categoryIcon: {
-        fontSize: 14,
-        marginRight: 6,
-    },
 });

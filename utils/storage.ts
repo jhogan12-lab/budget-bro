@@ -41,12 +41,12 @@ export async function getAllKeys(): Promise<string[]> {
 
 // Utility functions for specific data types
 export const storageUtils = {
-  async getPaychecks() {
-    return await loadData<any[]>('PAYCHECKS') || [];
+  async getIncome() {
+    return await loadData<any[]>('INCOME') || [];
   },
   
-  async savePaychecks(paychecks: any[]) {
-    return await saveData('PAYCHECKS', paychecks);
+  async saveIncome(income: any[]) {
+    return await saveData('INCOME', income);
   },
   
   async getBudgets() {

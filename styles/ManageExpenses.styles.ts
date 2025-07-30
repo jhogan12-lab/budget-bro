@@ -1,46 +1,6 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-    padding: 16,
-  },
-  summaryCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  totalLabel: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  totalValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  expenseText: {
-    color: '#dc2626',
-  },
   addButton: {
     backgroundColor: '#3b82f6',
     borderRadius: 12,
@@ -57,16 +17,6 @@ export const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  expensesCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   expenseItem: {
     paddingVertical: 12,
@@ -106,35 +56,16 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  categoryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
   categoryName: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1f2937',
     flex: 1,
   },
-  expenseAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
   expenseDetails: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
-  },
-  expenseDate: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  dateDot: {
-    fontSize: 12,
-    color: '#6b7280',
   },
   merchantText: {
     fontSize: 12,
@@ -157,56 +88,6 @@ export const styles = StyleSheet.create({
   recurringText: {
     fontSize: 10,
     color: '#6b7280',
-    fontWeight: '500',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuModal: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 8,
-    minWidth: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  menuOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  deleteOption: {
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  menuOptionText: {
-    fontSize: 16,
-    color: '#1f2937',
-    textAlign: 'center',
-  },
-  deleteText: {
-    color: '#dc2626',
     fontWeight: '500',
   },
 });

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -14,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList, BudgetCategory, Expense } from '../constants/types';
 import { storageUtils } from '../utils/storage';
 import { styles } from '../styles/ManageExpenses.styles'
+import { globalStyles } from '../styles/Global.styles';
 
 type ManageExpensesNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ManageExpenses'>;
 
@@ -127,23 +127,23 @@ export default function ManageExpenses({ navigation }: Props) {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={globalStyles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
       {/* Header Summary */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.cardTitle}>Expense Summary</Text>
-        <View style={styles.summaryRow}>
-          <Text style={styles.totalLabel}>Total Expenses:</Text>
-          <Text style={[styles.totalValue, styles.expenseText]}>
+      <View style={globalStyles.card}>
+        <Text style={globalStyles.cardTitle}>Expense Summary</Text>
+        <View style={globalStyles.summaryRow}>
+          <Text style={globalStyles.totalLabel}>Total Expenses:</Text>
+          <Text style={[globalStyles.totalValue, globalStyles.expenseText]}>
             ${totalExpenses.toFixed(2)}
           </Text>
         </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.totalLabel}>Number of Expenses:</Text>
-          <Text style={styles.totalValue}>{expenses.length}</Text>
+        <View style={globalStyles.summaryRow}>
+          <Text style={globalStyles.totalLabel}>Number of Expenses:</Text>
+          <Text style={globalStyles.totalValue}>{expenses.length}</Text>
         </View>
       </View>
 
@@ -156,8 +156,8 @@ export default function ManageExpenses({ navigation }: Props) {
       </TouchableOpacity>
 
       {/* Expenses List */}
-      <View style={styles.expensesCard}>
-        <Text style={styles.cardTitle}>All Expenses</Text>
+      <View style={globalStyles.card}>
+        <Text style={globalStyles.cardTitle}>All Expenses</Text>
 
         {expenses.length > 0 ? (
           expenses.map((expense) => {
@@ -177,32 +177,32 @@ export default function ManageExpenses({ navigation }: Props) {
                     
                     <View style={styles.expenseContent}>
                       <View style={styles.expenseTopRow}>
-                        <View style={styles.categoryBadge}>
-                          <View 
-                            style={[styles.categoryDot, { backgroundColor: categoryColor }]} 
-                          />
-                          <Text style={styles.categoryName}>{categoryName}</Text>
-                        </View>
-                        <Text style={[styles.expenseAmount, styles.expenseText]}>
+                        <Text style={styles.categoryName}>
+                          {expense.description || 'Invalid'}
+                        </Text>
+                        <Text style={[globalStyles.expenseAmount, globalStyles.expenseText]}>
                           -${expense.amount.toFixed(2)}
                         </Text>
                       </View>
                       
                       <View style={styles.expenseDetails}>
-                        <Text style={styles.expenseDate}>
+                        <View style={styles.categoryBadge}>
+                          <View 
+                            style={[globalStyles.categoryDot, { backgroundColor: categoryColor }]} 
+                          />
+                          <Text style={styles.categoryName}>{categoryName}</Text>
+                        </View>
+                        <Text style={globalStyles.listItemDate}>
                           {new Date(expense.date).toLocaleDateString()}
                         </Text>
+                        <Text style={globalStyles.dateDot}> | </Text>
                         {expense.merchant && (
                           <>
-                            <Text style={styles.dateDot}> • </Text>
+                            <Text style={globalStyles.dateDot}> • </Text>
                             <Text style={styles.merchantText}>{expense.merchant}</Text>
                           </>
                         )}
                       </View>
-                      
-                      {expense.note && (
-                        <Text style={styles.noteText}>{expense.note}</Text>
-                      )}
                       
                       {expense.isRecurring && (
                         <View style={styles.recurringBadge}>
@@ -218,9 +218,9 @@ export default function ManageExpenses({ navigation }: Props) {
             );
           })
         ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No Expenses Yet</Text>
-            <Text style={styles.emptyText}>
+          <View style={globalStyles.emptyState}>
+            <Text style={globalStyles.emptyStateTitle}>No Expenses Yet</Text>
+            <Text style={globalStyles.emptyStateText}>
               Start tracking your spending by adding your first expense.
             </Text>
           </View>
@@ -235,34 +235,34 @@ export default function ManageExpenses({ navigation }: Props) {
         onRequestClose={() => setShowMenu(false)}
       >
         <TouchableOpacity
-          style={styles.modalOverlay}
+          style={globalStyles.modalOverlay}
           onPress={() => setShowMenu(false)}
           activeOpacity={1}
         >
-          <View style={styles.menuModal}>
+          <View style={globalStyles.menuModal}>
             <TouchableOpacity
-              style={styles.menuOption}
+              style={globalStyles.menuOption}
               onPress={() => {
                 setShowMenu(false);
                 viewExpenseDetails(selectedExpenseId);
               }}
             >
-              <Text style={styles.menuOptionText}>View Details</Text>
+              <Text style={globalStyles.menuOptionText}>View Details</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.menuOption, styles.deleteOption]}
+              style={[globalStyles.menuOption, globalStyles.deleteOption]}
               onPress={() => {
                 setShowMenu(false);
                 deleteExpense(selectedExpenseId);
               }}
             >
-              <Text style={[styles.menuOptionText, styles.deleteText]}>Delete</Text>
+              <Text style={[globalStyles.menuOptionText, globalStyles.deleteText]}>Delete</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.menuOption}
+              style={globalStyles.menuOption}
               onPress={() => setShowMenu(false)}
             >
-              <Text style={styles.menuOptionText}>Cancel</Text>
+              <Text style={globalStyles.menuOptionText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
