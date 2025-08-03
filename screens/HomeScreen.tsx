@@ -1,4 +1,3 @@
-// screens/HomeScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,11 +7,14 @@ import {
   ScrollView,
   Alert,
   RefreshControl,
+  Modal
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { RootStackParamList, BudgetCategory, Expense, Paycheck } from '../constants/types';
+import { RootStackParamList, BudgetCategory, Expense, Income } from '../constants/types';
 import { storageUtils } from '../utils/storage';
+import { styles } from '../styles/HomeScreen.styles'
+import { globalStyles } from '../styles/Global.styles';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -25,37 +27,54 @@ export default function HomeScreen({ navigation }: Props) {
   const [totalBudgeted, setTotalBudgeted] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
+  const [income, setIncome] = useState<Income[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [selectedIncomeId, setSelectedIncomeId] = useState<string>('');
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenseMenuVisible, setExpenseMenuVisible] = useState(false);
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string>('');
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
   const loadDashboardData = async () => {
     try {
-      const [paychecks, budgets, expenses] = await Promise.all([
-        storageUtils.getPaychecks(),
+      const [incomeData, budgets, expenseData] = await Promise.all([
+        storageUtils.getIncome(),
         storageUtils.getBudgets(),
         storageUtils.getExpenses()
       ]);
 
-      // Calculate total income from paychecks
-      const income = paychecks.reduce((sum: number, paycheck: Paycheck) => sum + paycheck.amount, 0);
-      
+      // Calculate total income from income
+      const income = incomeData.reduce((sum: number, income: Income) => sum + income.amount, 0);
+
+      // Calculate total spent directly from all expenses
+      const spent = expenseData.reduce((sum: number, expense: Expense) => sum + expense.amount, 0);
+
       // Calculate spending per category
       const updatedCategories = budgets.map((category: BudgetCategory) => {
-        const categoryExpenses = expenses.filter((expense: Expense) => expense.categoryId === category.id);
-        const spent = categoryExpenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0);
-        
+        const categoryExpenses = expenseData.filter((expense: Expense) => expense.categoryId === category.id);
+        const categorySpent = categoryExpenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0);
+
         return {
           ...category,
-          spent
+          spent: categorySpent
         };
       });
 
       const budgeted = updatedCategories.reduce((sum, cat) => sum + cat.limit, 0);
-      const spent = updatedCategories.reduce((sum, cat) => sum + cat.spent, 0);
 
       setTotalIncome(income);
       setTotalBudgeted(budgeted);
       setTotalSpent(spent);
       setCategories(updatedCategories);
+      setIncome(incomeData);
+      setExpenses(expenseData);
     } catch (error) {
       Alert.alert('Error', 'Failed to load dashboard data');
       console.error(error);
@@ -75,6 +94,87 @@ export default function HomeScreen({ navigation }: Props) {
     }, [])
   );
 
+  const showIncomeMenu = (incomeId: string) => {
+    setSelectedIncomeId(incomeId);
+    setShowMenu(true);
+  };
+
+  const viewIncomeDetails = (incomeId: string) => {
+    const item = income.find(i => i.id === incomeId);
+    if (item) {
+      Alert.alert(
+        'Income Details',
+        `Label: ${item.label}\nAmount: $${formatCurrency(item.amount)}\nDate: ${new Date(item.date).toLocaleDateString()}\nRecurring: ${item.isRecurring ? 'Yes' : 'No'}${item.frequency ? `\nFrequency: ${item.frequency}` : ''}`
+      );
+    }
+  };
+
+  const deleteIncome = async (incomeId: string) => {
+    Alert.alert(
+      'Delete Income',
+      'Are you sure you want to delete this income?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updatedIncome = income.filter(p => p.id !== incomeId);
+              await storageUtils.saveIncome(updatedIncome);
+              await loadDashboardData();
+              Alert.alert('Success', 'Income deleted successfully');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete income');
+              console.error(error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const showExpenseMenu = (expenseId: string) => {
+    setSelectedExpenseId(expenseId);
+    setExpenseMenuVisible(true);
+  };
+
+  const viewExpenseDetails = (expenseId: string) => {
+    const expense = expenses.find(e => e.id === expenseId);
+    const category = categories.find(cat => cat.id === expense?.categoryId);
+    if (expense) {
+      Alert.alert(
+        'Expense Details',
+        `Category: ${category ? category.name : 'Unknown'}\nAmount: $ ${formatCurrency(expense.amount)}\nNote: ${expense.note || 'None'}\nDate: ${new Date(expense.date).toLocaleDateString()}`
+      );
+    }
+  };
+
+  const deleteExpense = async (expenseId: string) => {
+    Alert.alert(
+      'Delete Expense',
+      'Are you sure you want to delete this expense?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updatedExpenses = expenses.filter(e => e.id !== expenseId);
+              await storageUtils.saveExpenses(updatedExpenses);
+              await loadDashboardData();
+              Alert.alert('Success', 'Expense deleted successfully');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete expense');
+              console.error(error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const remainingBudget = totalIncome - totalSpent;
   const budgetHealthColor = remainingBudget >= 0 ? '#22c55e' : '#ef4444';
 
@@ -84,299 +184,337 @@ export default function HomeScreen({ navigation }: Props) {
     color?: string;
   }) => (
     <TouchableOpacity
-      style={[styles.actionButton, { backgroundColor: color }]}
+      style={[globalStyles.actionButton, { backgroundColor: color }]}
       onPress={onPress}
     >
-      <Text style={styles.actionButtonText}>{title}</Text>
+      <Text style={globalStyles.actionButtonText}>{title}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      {/* Budget Summary Card */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.cardTitle}>Budget Summary</Text>
-        
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Total Income:</Text>
-          <Text style={[styles.summaryValue, styles.incomeText]}>
-            ${totalIncome.toFixed(2)}
-          </Text>
-        </View>
-        
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Total Spent:</Text>
-          <Text style={[styles.summaryValue, styles.expenseText]}>
-            ${totalSpent.toFixed(2)}
-          </Text>
-        </View>
-        
-        <View style={[styles.summaryRow, styles.totalRow]}>
-          <Text style={styles.totalLabel}>Remaining:</Text>
-          <Text style={[styles.totalValue, { color: budgetHealthColor }]}>
-            ${remainingBudget.toFixed(2)}
-          </Text>
-        </View>
-      </View>
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={globalStyles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Empty State */}
+        {categories.length === 0 && totalIncome === 0 && income.length === 0 && (
+          <View style={globalStyles.emptyState}>
+            <Text style={globalStyles.emptyStateTitle}>Welcome to Budget Buddy!</Text>
+            <Text style={globalStyles.emptyStateText}>
+              Get started by adding your first income and setting up budget categories.
+            </Text>
+          </View>
+        )}
 
-      {/* Quick Actions */}
-      <View style={styles.actionsCard}>
-        <Text style={styles.cardTitle}>Quick Actions</Text>
-        <View style={styles.actionsGrid}>
-          <ActionButton
-            title="Add Paycheck"
-            onPress={() => navigation.navigate('Add Paycheck')}
-            color="#22c55e"
-          />
-          <ActionButton
-            title="Log Expense"
-            onPress={() => navigation.navigate('Log Expense')}
-            color="#ef4444"
-          />
-          <ActionButton
-            title="Add Budget"
-            onPress={() => navigation.navigate('Add Budget')}
-            color="#3b82f6"
-          />
-          <ActionButton
-            title="View Budgets"
-            onPress={() => navigation.navigate('Budgets')}
-            color="#8b5cf6"
-          />
-        </View>
-      </View>
+        {/* Budget Summary Card */}
+        <View style={globalStyles.cardCompact}>
+          <Text style={globalStyles.cardTitle}>Budget Summary</Text>
 
-      {/* Recent Categories Preview */}
-      {categories.length > 0 && (
-        <View style={styles.categoriesCard}>
-          <Text style={styles.cardTitle}>Budget Categories</Text>
-          {categories.slice(0, 3).map((category) => {
-            const percentage = category.limit > 0 ? (category.spent / category.limit) * 100 : 0;
-            const isOverBudget = percentage > 100;
-            
-            return (
-              <View key={category.id} style={styles.categoryItem}>
-                <View style={styles.categoryHeader}>
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                  <Text style={styles.categoryAmount}>
-                    ${category.spent.toFixed(2)} / ${category.limit.toFixed(2)}
-                  </Text>
+          <View style={globalStyles.summaryRow}>
+            <Text style={styles.totalIncome}>Total Income:</Text>
+            <Text style={[globalStyles.summaryValue, globalStyles.incomeText]}>
+              ${formatCurrency(totalIncome)}
+            </Text>
+          </View>
+
+          <View style={globalStyles.summaryRow}>
+            <Text style={styles.totalIncome}>Total Spent:</Text>
+            <Text style={[globalStyles.summaryValue, globalStyles.expenseText]}>
+              ${formatCurrency(totalSpent)}
+            </Text>
+          </View>
+
+          <View style={[globalStyles.summaryRow, globalStyles.totalRow]}>
+            <Text style={globalStyles.totalLabel}>Remaining:</Text>
+            <Text style={[globalStyles.totalValue, { color: budgetHealthColor }]}>
+              ${formatCurrency(remainingBudget)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Income Section */}
+        <View style={globalStyles.cardCompact}>
+          <View style={globalStyles.cardHeader}>
+            <Text style={globalStyles.cardTitle}>Income</Text>
+            <TouchableOpacity
+              style={globalStyles.viewButton}
+              onPress={() => navigation.navigate('Income')}
+            >
+              <Text style={globalStyles.viewButtonText}>Manage Income</Text>
+            </TouchableOpacity>
+          </View>
+
+          {income.length > 0 ? (
+            <>
+              {income.map((income) => (
+                <View key={income.id} style={globalStyles.listItem}>
+                  <View style={globalStyles.listItemHeader}>
+                    <View style={globalStyles.listItemContent}>
+                      <TouchableOpacity
+                        style={globalStyles.menuButton}
+                        onPress={() => showIncomeMenu(income.id)}
+                      >
+                        <Text style={globalStyles.menuDots}>⋯</Text>
+                      </TouchableOpacity>
+                      <View style={globalStyles.rowStart}>
+                        <Text style={globalStyles.listItemName}>{income.label}</Text>
+                        <Text style={globalStyles.dateDot}> • </Text>
+                        <Text style={globalStyles.listItemDate}>
+                          {new Date(income.date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[globalStyles.incomeAmount, globalStyles.incomeText]}>
+                      +${formatCurrency(income.amount)}
+                    </Text>
+                  </View>
+                  <View style={styles.incomeDetails}>
+                    {income.isRecurring && (
+                      <View style={globalStyles.recurringBadge}>
+                        <Text style={globalStyles.recurringText}>
+                          {income.frequency?.replace('-', ' ').toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-                <View style={styles.progressBarContainer}>
-                  <View 
-                    style={[
-                      styles.progressBar, 
-                      { 
-                        width: `${Math.min(percentage, 100)}%`,
-                        backgroundColor: isOverBudget ? '#ef4444' : category.color
-                      }
-                    ]} 
-                  />
-                </View>
-                <Text style={[styles.percentageText, isOverBudget && styles.overBudgetText]}>
-                  {percentage.toFixed(0)}%
+              ))}
+
+              {/* Total Income Row */}
+              <View style={[globalStyles.summaryRow, globalStyles.totalRow]}>
+                <Text style={globalStyles.totalLabel}>Total Income:</Text>
+                <Text style={[globalStyles.totalValue, globalStyles.incomeText]}>
+                  ${formatCurrency(totalIncome)}
                 </Text>
               </View>
-            );
-          })}
-          
-          {categories.length > 3 && (
-            <TouchableOpacity 
-              style={styles.viewMoreButton}
-              onPress={() => navigation.navigate('Budgets')}
-            >
-              <Text style={styles.viewMoreText}>View All Categories</Text>
-            </TouchableOpacity>
+            </>
+          ) : (
+            <View style={globalStyles.emptyStateSmall}>
+              <Text style={globalStyles.emptyStateTitle}>No income added yet</Text>
+              <Text style={globalStyles.emptyStateText}>
+                Tap "Add Income" to start tracking your income
+              </Text>
+            </View>
           )}
         </View>
-      )}
 
-      {/* Empty State */}
-      {categories.length === 0 && totalIncome === 0 && (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyTitle}>Welcome to Budget Buddy!</Text>
-          <Text style={styles.emptyText}>
-            Get started by adding your first paycheck and setting up budget categories.
-          </Text>
+        {/* Expenses Section */}
+        <View style={globalStyles.cardCompact}>
+          <View style={globalStyles.cardHeader}>
+            <Text style={globalStyles.cardTitle}>Expenses</Text>
+            <TouchableOpacity
+              style={globalStyles.viewButton}
+              onPress={() => navigation.navigate('ManageExpenses')}
+            >
+              <Text style={globalStyles.viewButtonText}>Manage Expenses</Text>
+            </TouchableOpacity>
+          </View>
+
+          {expenses.length > 0 ? (
+            <>
+              {expenses.slice(0, 5).map((expense) => {
+                const category = categories.find(cat => cat.id === expense.categoryId);
+                return (
+                  <View key={expense.id} style={globalStyles.listItem}>
+                    <View style={globalStyles.listItemHeader}>
+                      <View style={globalStyles.listItemContent}>
+                        <TouchableOpacity
+                          style={globalStyles.menuButton}
+                          onPress={() => showExpenseMenu(expense.id)}
+                        >
+                          <Text style={globalStyles.menuDots}>⋯</Text>
+                        </TouchableOpacity>
+                        <View style={globalStyles.rowStart}>
+                          <Text style={globalStyles.listItemName}>
+                            {category ? category.name : 'Unknown Category'}
+                            {expense.note && ` - ${expense.note}`}
+                          </Text>
+                          <Text style={globalStyles.dateDot}> • </Text>
+                          <Text style={globalStyles.listItemDate}>
+                            {new Date(expense.date).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={[globalStyles.expenseAmount, globalStyles.expenseText]}>
+                        -${formatCurrency(expense.amount)}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+
+              {/* Total Spent Row */}
+              <View style={[globalStyles.summaryRow, globalStyles.totalRow]}>
+                <Text style={globalStyles.totalLabel}>Total Spent:</Text>
+                <Text style={[globalStyles.totalValue, globalStyles.expenseText]}>
+                  ${formatCurrency(totalSpent)}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <View style={globalStyles.emptyStateSmall}>
+              <Text style={globalStyles.emptyStateTitle}>No expenses logged yet</Text>
+              <Text style={globalStyles.emptyStateText}>
+                Tap "Log Expense" to start tracking your spending
+              </Text>
+            </View>
+          )}
         </View>
-      )}
-    </ScrollView>
+
+        {/* Actions */}
+        <View style={globalStyles.cardCompact}>
+          <Text style={globalStyles.cardTitle}>Add Items</Text>
+          <View style={globalStyles.actionsGrid}>
+            <ActionButton
+              title="Add Income"
+              onPress={() => navigation.navigate('Add Income')}
+              color="#22c55e"
+            />
+            <ActionButton
+              title="Log Expense"
+              onPress={() => navigation.navigate('Log Expense')}
+              color="#ef4444"
+            />
+            <ActionButton
+              title="My Budgets"
+              onPress={() => navigation.navigate('Add Budget')}
+              color="#3b82f6"
+            />
+          </View>
+        </View>
+
+        {/* Recent Categories Preview */}
+        {categories.length > 0 && (
+          <View style={globalStyles.cardCompact}>
+            <Text style={globalStyles.cardTitle}>Budget Categories</Text>
+            {categories.slice(0, 3).map((category) => {
+              const percentage = category.limit > 0 ? (category.spent / category.limit) * 100 : 0;
+              const isOverBudget = percentage > 100;
+
+              return (
+                <View key={category.id} style={styles.categoryItem}>
+                  <View style={globalStyles.row}>
+                    <Text style={globalStyles.categoryName}>{category.name}</Text>
+                    <Text style={globalStyles.categoryAmount}>
+                      ${formatCurrency(category.spent)} / ${formatCurrency(category.limit)}
+                    </Text>
+                  </View>
+                  <View style={globalStyles.progressBarContainer}>
+                    <View
+                      style={[
+                        globalStyles.progressBar,
+                        {
+                          width: `${Math.min(percentage, 100)}%`,
+                          backgroundColor: isOverBudget ? '#ef4444' : category.color
+                        }
+                      ]}
+                    />
+                  </View>
+                  <Text style={[globalStyles.percentageText, isOverBudget && globalStyles.overBudgetText]}>
+                    {percentage.toFixed(0)}%
+                  </Text>
+                </View>
+              );
+            })}
+
+            {categories.length > 3 && (
+              <TouchableOpacity
+                style={globalStyles.viewMoreButton}
+                onPress={() => navigation.navigate('Budgets')}
+              >
+                <Text style={globalStyles.viewMoreText}>View All Categories</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        <View style={{ height: 80 }} />
+      </ScrollView>
+
+      {/* Custom Menu Modal */}
+      <Modal
+        visible={showMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <TouchableOpacity
+          style={globalStyles.modalOverlay}
+          onPress={() => setShowMenu(false)}
+          activeOpacity={1}
+        >
+          <View style={globalStyles.menuModal}>
+            <TouchableOpacity
+              style={globalStyles.menuOption}
+              onPress={() => {
+                setShowMenu(false);
+                navigation.navigate('Edit Income', { incomeId: selectedIncomeId });
+              }}
+            >
+              <Text style={globalStyles.menuOptionText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[globalStyles.menuOption, globalStyles.deleteOption]}
+              onPress={() => {
+                setShowMenu(false);
+                deleteIncome(selectedIncomeId);
+              }}
+            >
+              <Text style={[globalStyles.menuOptionText, globalStyles.deleteText]}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={globalStyles.menuOption}
+              onPress={() => setShowMenu(false)}
+            >
+              <Text style={globalStyles.menuOptionText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Expense Menu Modal */}
+      <Modal
+        visible={expenseMenuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setExpenseMenuVisible(false)}
+      >
+        <TouchableOpacity
+          style={globalStyles.modalOverlay}
+          onPress={() => setExpenseMenuVisible(false)}
+          activeOpacity={1}
+        >
+          <View style={globalStyles.menuModal}>
+            <TouchableOpacity
+              style={globalStyles.menuOption}
+              onPress={() => {
+                setExpenseMenuVisible(false);
+                navigation.navigate('Edit Expense', { expenseId: selectedExpenseId });
+              }}
+            >
+              <Text style={globalStyles.menuOptionText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[globalStyles.menuOption, globalStyles.deleteOption]}
+              onPress={() => {
+                setExpenseMenuVisible(false);
+                deleteExpense(selectedExpenseId);
+              }}
+            >
+              <Text style={[globalStyles.menuOptionText, globalStyles.deleteText]}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={globalStyles.menuOption}
+              onPress={() => setExpenseMenuVisible(false)}
+            >
+              <Text style={globalStyles.menuOptionText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-    padding: 16,
-  },
-  summaryCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#1f2937',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  incomeText: {
-    color: '#22c55e',
-  },
-  expenseText: {
-    color: '#ef4444',
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    paddingTop: 12,
-    marginTop: 8,
-  },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  actionsCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  actionButton: {
-    backgroundColor: '#4f46e5',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 0.48,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  categoriesCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  categoryItem: {
-    marginBottom: 16,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  categoryAmount: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  percentageText: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'right',
-  },
-  overBudgetText: {
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  viewMoreButton: {
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  viewMoreText: {
-    color: '#4f46e5',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyState: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-});

@@ -1,5 +1,5 @@
 // constants/types.ts
-export type Paycheck = {
+export type Income = {
   id: string;
   label: string;
   amount: number;
@@ -24,6 +24,9 @@ export type Expense = {
   note?: string;
   date: string;
   merchant?: string;
+  description: string;
+  isRecurring?: boolean;
+  frequency?: 'weekly' | 'bi-weekly' | 'monthly' | 'semi-monthly';
 };
 
 export type BudgetSummary = {
@@ -35,7 +38,7 @@ export type BudgetSummary = {
 };
 
 export const STORAGE_KEYS = {
-  PAYCHECKS: 'PAYCHECKS',
+  INCOME: 'INCOME',
   BUDGETS: 'BUDGETS',
   EXPENSES: 'EXPENSES',
 } as const;
@@ -54,8 +57,15 @@ export const CATEGORY_COLORS = [
 // Navigation types
 export type RootStackParamList = {
   Home: undefined;
-  'Add Paycheck': undefined;
+  'Add Income': undefined;
   'Add Budget': undefined;
   'Log Expense': undefined;
+  'Edit Expense': { expenseId: string };
+  'Edit Income': { incomeId: string };
   Budgets: undefined;
+  Income: undefined;
+  ManageExpenses: undefined;
+  Profile: undefined;
+  Support: undefined;
+  Contact: undefined;
 };
